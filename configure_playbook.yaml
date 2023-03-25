@@ -1,0 +1,235 @@
+---
+- hosts: all
+  gather_facts: false
+  remote_user: admini
+  # denisko
+  become: true
+  tasks:
+
+    ##### Create users with sudo group #####
+    - block:
+
+      - name: Creating users with admin access
+        user:
+          name: "{{ uusername }}"
+          password: "{{ uusername | password_hash('sha512') }}"
+          groups: sudo
+          generate_ssh_key: true
+        loop:
+          - d.alexeev
+          - s.ivannikov
+        loop_control:
+          loop_var: uusername
+
+      - name: "Set authorized key for denisko user"
+        authorized_key:
+          user: "{{ uusername }}"
+          key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDO05ZAm2PuydZMfA/IXSfO0ZpATYxgGks7ON+jfD5Wpay1PushmzAG88BIPDfrVB84ycv2TCqwaFmF8HieQHYcfnwlJeH0C5HPILiM6keIGx95T8SKANLyof7cI6ppCfXhrNned65/fIK00R8ls8z69BpHuwEx0as7CvGAeAkbkC/M9Kd+DTWim4U77UGBpWBg4IDI/kYPp6Fd6dwvqmpntOK42r6hg+f+Ym7DmuoZXarM3bbpu/MFwtx2dS4wyvRV0MlXvAife5Pm5wMVtmYujKVPPObv12Lrm+dOtcjykXoRYfZVASeTv76uKQsW+3Cwm3jf5JfhPghC7S319SeEPDH/ZhuhDZ62uE96INxpgIRZ4MN/a6R2AXJm+jMXXnbhwc8K/UjWr8IEUPAznQMsrMp3hFQZFSGiS8nE5kdAmoCAcCwmjGwxFfTJzXGKVxuvlRImwKllmYhbn0rUK3NRw4w8SDr1Jj3N34PSNb3LtL/xgzWIuku2vYi30Uh5K2U= denisko@MacBook-Pro-Denis.local"
+          state: present
+        loop:
+          - d.alexeev
+          - s.ivannikov
+        loop_control:
+          loop_var: uusername
+
+    ##### Disable pass auth and root login #####
+    - block:
+
+      - name: Disallow SSH password authentication
+        lineinfile:
+          dest=/etc/ssh/sshd_config
+          regexp="^PasswordAuthentication"
+          line="PasswordAuthentication no"
+          state=present
+
+      - name: Disable Root Login
+        lineinfile:
+          dest: /etc/ssh/sshd_config
+          regexp: '^PermitRootLogin'
+          line: "PermitRootLogin no"
+          state: present
+          backup: yes
+
+      - name: Stop and Start ssh
+        service:
+          name: sshd
+          state: restarted
+
+    #### Create logical disk and mount /var ######
+    - block:
+
+      - name: Create the "{{ lv_name }}" Logical Volume.
+        lvol:
+          vg: "{{ vg_name }}"
+          lv: "{{ lv_name }}"
+          size: "{{ require_lv_size }}"
+          active: yes
+          force: no
+          state: present
+
+      - name: Create a "{{ fs }}" filesystem on lvm "/dev/mapper/{{ vg_name}}-{{ lv_name}}".
+        filesystem:
+          fstype: "{{ fs }}"
+          dev: "/dev/mapper/{{ vg_name }}-{{ lv_name }}"
+          force: no
+
+      - name: Create a directory to mount the filesystem.
+        file:
+          path: "{{ mount_point }}"
+          state: directory
+          mode: '0755'
+
+      - name: Mount the created "{{ fs }}" filesystem.
+        mount:
+          path: "{{ mount_point }}"
+          src: "/dev/mapper/{{ vg_name}}-{{ lv_name}}"
+          fstype: "{{ fs }}"
+          opts: rw,nosuid,noexec
+          state: mounted
+
+      vars:
+        vg_name: vgKVM
+        lv_name: lvVAR
+        require_lv_size: 30G
+        fs: ext4
+        mount_point: /var
+
+    ##### Swap file ######
+    - block:
+
+      - name: Check if swap file exists
+        stat:
+          path: "{{ swap_file }}"
+        register: swap_file_check
+
+      - name: Create swap file
+        command: fallocate -l 4G {{ swap_file }}
+        when: not swap_file_check.stat.exists
+
+      - name: Create swap space
+        command: dd if=/dev/zero of=/extraswap bs=1M count=512
+        when: not swap_file_check.stat.exists
+
+      - name: Set permissions on swap file
+        file:
+          path: "{{ swap_file }}"
+          mode: 0600
+
+      - name: Format swap file
+        command: mkswap {{ swap_file }}
+        when: not swap_file_check.stat.exists
+
+      - name: Add to fstab
+        lineinfile:
+          dest: /etc/fstab
+          regexp: "{{ swap_file }}"
+          line: "{{ swap_file }} none swap sw 0 0"
+
+      - name: Turn on swap
+        command: swapon {{ swap_file }}
+
+      vars:
+        swap_file: /my_swapfile.swap
+
+    #### iptables #####
+    - block:
+
+      - name: Reject incoming ICMP traffic
+        iptables:
+          chain: INPUT
+          protocol: icmp
+          jump: REJECT
+          reject_with: icmp-port-unreachable
+
+      - name: Allow related and established connections
+        iptables:
+          chain: INPUT
+          ctstate: ESTABLISHED,RELATED
+          jump: ACCEPT
+
+      - name: Allow new incoming SYN packets on TCP port 22 (SSH)
+        iptables:
+          chain: INPUT
+          protocol: tcp
+          destination_port: 22
+          ctstate: NEW
+          syn: match
+          jump: ACCEPT
+          comment: Accept new SSH connections.
+
+      - name: Set default policies for INPUT chains to DROP
+        iptables:
+          chain: INPUT
+          policy: DROP
+
+      - name: Allow incoming traffic only from 192.168.0.0/16 subnet
+        iptables:
+          chain: INPUT
+          protocol: "{{ item_protocol }}"
+          source: "192.168.0.0/16"
+          #"10.92.0.0/16"
+          jump: ACCEPT
+        loop:
+          - tcp
+          - udp
+          - icmp
+        loop_control:
+          loop_var: item_protocol
+
+      - name: Ensures iptables directory exists
+        file:
+          path: /etc/iptables
+          state: directory
+          recurse: yes
+
+      - name: Save current policies
+        shell:
+          cmd: iptables-save > /etc/iptables/rules.v4
+
+      - name: Ensures network/if-pre-up.d directory exists
+        file:
+          path: /etc/network/if-pre-up.d
+          state: directory
+          recurse: yes
+
+      - name: Create script that update policies in startup
+        copy:
+          src: iptables.sh
+          dest: /etc/network/if-pre-up.d/run-iptables
+          force: yes
+          mode: '0755'
+
+      - name: Create systemd unit file
+        copy:
+          src: "restore-iptables.service"
+          dest: "/usr/lib/systemd/system/restore-iptables.service"
+          mode: "0640"
+          owner: "root"
+
+      - name: Enable service restore-iptables
+        systemd:
+          name: restore-iptables
+          enabled: yes
+          daemon_reload: yes
+
+      - name: Restart service restore-iptables
+        systemd:
+          name: restore-iptables
+          state: restarted
+          daemon-reload: yes
+
+      # Crontab doesn't work. Those I create systemd unit for run script.
+      #- name: Create cron job to run script on reboot
+      #  cron:
+      #    name: Run script on reboot
+      #    special_time: "reboot"
+      #    state: present
+      #    job: sleep 300 && /etc/network/if-pre-up.d/run-iptables
+
+    ### max connection ###
+    - name: set maximum number of connections
+      sysctl:
+        name: net.netfilter.nf_conntrack_max
+        value: 4096
+        state: present
+        reload: yes

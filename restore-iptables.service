@@ -1,0 +1,12 @@
+[Unit]
+Description=Restore Iptables config
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/bin/bash /etc/network/if-pre-up.d/run-iptables
+Type=simple
+User=root
+WorkingDirectory=/etc/network/if-pre-up.d
+Restart=on-failure
