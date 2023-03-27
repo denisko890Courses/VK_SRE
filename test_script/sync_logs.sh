@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Crontab option: 0 0 * * * /path/to/script.sh $1 $2 $3
+# Crontab option: 0 0 * * * /path/to/script.sh $1 $2 $3 $4
 # Запуск скрипта: ./sync_logs.sh /source/path/ remote_username remote_host /remote/path/to/sync_file
 # Пользователь должен иметь доступ к машине по ключу
 
