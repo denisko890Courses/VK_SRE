@@ -1,0 +1,12 @@
+all:
+  vars:
+    mysql_users:
+      - user: "user1"
+        password: "password1"
+        database: "db1"
+        host: "localhost"
+      - user: "user2"
+        password: "password2"
+        database: "db2"
+        host: "localhost"
+

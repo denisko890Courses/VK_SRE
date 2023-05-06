@@ -1,0 +1,79 @@
+---
+- name: Install Apache
+  become: yes
+  apt:
+    name: apache2
+    state: present
+
+- name: Install MySQL
+  become: yes
+  apt:
+    name: mysql-server
+    state: present
+
+- name: Install PHP
+  become: yes
+  apt:
+    name: php
+    state: present
+
+- name: Install PHP extensions
+  become: yes
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php-mysql
+    - php-curl
+    - php-gd
+    - php-intl
+    - php-json
+    - php-mbstring
+    - php-xml
+    - php-zip
+
+- name: Configure MySQL
+  become: yes
+  mysql_user:
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.database }}.*:ALL"
+    host: "{{ item.host }}"
+    state: present
+  with_items: "{{ mysql_users }}"
+
+- name: Create MySQL database
+  become: yes
+  mysql_db:
+    name: "{{ item.database }}"
+    state: present
+  with_items: "{{ mysql_users }}"
+
+- name: Copy Apache VirtualHost configuration file
+  become: yes
+  template:
+    src: lamp.conf.j2
+    dest: /etc/apache2/sites-available/lamp.conf
+    mode: '0644'
+
+- name: Enable Apache VirtualHost
+  become: yes
+  apache2_module:
+    state: present
+    name: rewrite
+
+- name: Enable Apache VirtualHost
+  become: yes
+  apache2_vhost:
+    state: present
+    document_root: /var/www/html
+    filename: lamp.conf
+    port: 80
+
+
+- name: Copy index.php
+  become: yes
+  template:
+    src: index.php.j2
+    dest: /var/www/html/index.php
+
