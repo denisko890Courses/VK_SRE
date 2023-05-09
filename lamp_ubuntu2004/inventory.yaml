@@ -1,10 +1,10 @@
 [lamp]
-mdu-ubuntu-test.ru-central1.internal
+10.92.16.59
 
 [lamp:vars]
 mysql_root_password=mysql_root_password
 app_user=mysql
-http_host=mdu-ubuntu-test.ru-central1.internal
+http_host=10.92.16.59
 http_conf=mdu-ubuntu-test.conf
 http_port=8081
 disable_default=true
