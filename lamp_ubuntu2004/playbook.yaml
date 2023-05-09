@@ -1,0 +1,6 @@
+---
+- hosts: lamp
+  become: true
+  remote_user: mdu #admini
+  roles:
+    - lamp
