@@ -46,6 +46,7 @@
         owner: root
         group: root
         mode: '0644'
+      notify: Restart MySQL
 
     - name: Sets the root password
       mysql_user:
