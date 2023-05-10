@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'TABLE_NAME', defaultValue: 'Players', description: 'Name of the table to query')
+        string(name: 'DB_HOST', defaultValue: '10.92.16.59', description: 'MySQL host')
+        string(name: 'DB_PORT', defaultValue: '3306', description: 'MySQL port')
+        string(name: 'DB_NAME', defaultValue: 'mydatabase', description: 'MySQL database name')
+        string(name: 'DB_USER', defaultValue: 'jenkins', description: 'MySQL database user')
+        password(name: 'DB_PASSWORD', defaultValue: 'mysql_root_password', description: 'MySQL database password')
+    }
+
+    stages {
+        stage('Query MySQL database') {
+            steps {
+                script {
+                    def query = "SELECT * FROM ${params.TABLE_NAME};"
+                    def mysql = "mysql -u ${params.DB_USER} -p${params.DB_PASSWORD} -h ${params.DB_HOST} -P ${params.DB_PORT} -D ${params.DB_NAME} -e '${query}'"
+                    def result = sh(returnStdout: true, script: mysql).trim()
+                    println(result)
+                }
+            }
+        }
+    }
+}
