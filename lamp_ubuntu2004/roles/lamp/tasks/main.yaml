@@ -39,6 +39,14 @@
       notify: Reload Apache
 
     # MySQL Configuration
+    - name: Configure mysqld.conf
+      copy:
+        src: mysqld.cnf
+        dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+        owner: root
+        group: root
+        mode: '0644'
+
     - name: Sets the root password
       mysql_user:
         login_user: root
