@@ -14,10 +14,14 @@ pipeline {
         stage('Query MySQL database') {
             steps {
                 script {
-                    def query = "SELECT * FROM ${params.TABLE_NAME};"
-                    def mysql = "mysql -u ${params.DB_USER} -p${params.DB_PASSWORD} -h ${params.DB_HOST} -P ${params.DB_PORT} -D ${params.DB_NAME} -e '${query}'"
-                    def result = sh(returnStdout: true, script: mysql).trim()
-                    println(result)
+                    withCredentials([usernamePassword(credentialsId: 'db_jenkins_creds', passwordVariable: 'pass', usernameVariable: 'user')]) {
+                        println("$pass")
+                        println("$user")
+                        def query = "SELECT * FROM ${params.TABLE_NAME};"
+                        def mysql = "mysql -u $user -p$pass -h ${params.DB_HOST} -P ${params.DB_PORT} -D ${params.DB_NAME} -e '${query}'"
+                        def result = sh(returnStdout: true, script: mysql).trim()
+                        println(result)
+                    }
                 }
             }
         }
