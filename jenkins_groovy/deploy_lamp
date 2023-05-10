@@ -1,0 +1,27 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // Checkout code from Github repository
+            git branch: 'main', url: "https://github.com/denisko890Courses/VK_SRE" // используем встроенный в Jenkins плагин Git для скачивания проекта из бранча main
+      }
+    }
+    stage('Run Ansible Playbook') {
+      steps {
+        // Run Ansible playbook using Ansible plugin
+        sh("""pwd""")
+        sh("""ls -al""")
+        sh("""whoami""")
+        dir('lamp_ubuntu2004') {
+            ansiblePlaybook(
+                inventory: 'inventory.yaml', // Path to your inventory file
+                playbook: 'playbook.yaml', // Path to your playbook
+                colorized: true // Enable colorized output
+            )
+        }
+      }
+    }
+  }
+}
