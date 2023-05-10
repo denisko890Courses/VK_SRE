@@ -1,7 +1,7 @@
 # VK_SRE
 SRE Quest
 
-jenkins_groovy - Pipelines for deploy LAMP and dump DB
+jenkins_groovy - Pipelines for deploy LAMP, dumb db, sql_query.
 
 lamp_ubuntu2004 - Ansible playbooks for deploy and configure LAMP
 
@@ -14,8 +14,3 @@ For run playbook run
 ```
 ansible-playbook configure_playbook.yaml -i inventory.yaml --private-key=/path/to/private/key
 ```
-
-Best practice(in Future):
-1) Split playbook (Several playbooks and roles)
-2) Use tags
-3) Create and use special user for Ansible
