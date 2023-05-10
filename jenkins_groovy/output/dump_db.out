@@ -1,0 +1,60 @@
+Started by user admini
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/DB_dump
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Dump MySQL database)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] sh
++ mkdir -p /var/jenkins_home/workspace/DB_dump/dumps
+[Pipeline] withCredentials
+Masking supported pattern matches of $db_user_pass
+[Pipeline] {
+[Pipeline] sh
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [db_user_pass, DB_PASSWORD]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ mysqldump -u jenkins -p**** -h 10.92.16.59 mydatabase
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/DB_dump/dumps
+[Pipeline] {
+[Pipeline] sh
++ ls -la
+total 348
+drwxr-xr-x 2 jenkins jenkins  4096 May 10 19:41 .
+drwxr-xr-x 6 jenkins jenkins  4096 May 10 08:53 ..
+-rw-r--r-- 1 jenkins jenkins     0 May 10 08:43 2023-05-10_08-43-13-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:44 2023-05-10_08-44-20-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:48 2023-05-10_08-48-47-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:49 2023-05-10_08-49-27-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:49 2023-05-10_08-49-54-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:50 2023-05-10_08-50-58-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:51 2023-05-10_08-51-43-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 08:53 2023-05-10_08-53-34-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 10:45 2023-05-10_10-45-49-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 11:02 2023-05-10_11-02-42-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 11:04 2023-05-10_11-04-23-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins     0 May 10 11:04 2023-05-10_11-04-43-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 11:08 2023-05-10_11-08-24-mydatabase.sql
+-rw-r--r-- 1 jenkins jenkins 25681 May 10 19:41 2023-05-10_19-41-14-mydatabase.sql
+-rw-r--r-- 1 root    root      101 May 10 10:27 mysql
+[Pipeline] sh
++ pwd
+/var/jenkins_home/workspace/DB_dump/dumps
+[Pipeline] archiveArtifacts
+Archiving artifacts
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS

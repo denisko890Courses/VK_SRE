@@ -1,0 +1,151 @@
+Started by user admini
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/Deploy_LAMP
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] git
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/Deploy_LAMP/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/denisko890Courses/VK_SRE # timeout=10
+Fetching upstream changes from https://github.com/denisko890Courses/VK_SRE
+ > git --version # timeout=10
+ > git --version # 'git version 2.30.2'
+ > git fetch --tags --force --progress -- https://github.com/denisko890Courses/VK_SRE +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision 705a77229079b64f12664eccc0088a24c0dac462 (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 705a77229079b64f12664eccc0088a24c0dac462 # timeout=10
+ > git branch -a -v --no-abbrev # timeout=10
+ > git branch -D main # timeout=10
+ > git checkout -b main 705a77229079b64f12664eccc0088a24c0dac462 # timeout=10
+Commit message: "Added extensions and README files"
+ > git rev-list --no-walk 0bac927dc49c66c85c7dae933cf012dd12d3144e # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Run Ansible Playbook)
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/Deploy_LAMP/lamp_ubuntu2004
+[Pipeline] {
+[Pipeline] ansiblePlaybook
+[lamp_ubuntu2004] $ ansible-playbook playbook.yaml -i inventory.yaml
+
+PLAY [lamp] ********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Install prerequisites] ********************************************
+[0;32mok: [10.92.16.59] => (item=aptitude)[0m
+
+TASK [lamp : Install LAMP Packages] ********************************************
+[0;32mok: [10.92.16.59] => (item=apache2)[0m
+[0;32mok: [10.92.16.59] => (item=mysql-server)[0m
+[0;32mok: [10.92.16.59] => (item=python3-pymysql)[0m
+[0;32mok: [10.92.16.59] => (item=php)[0m
+[0;32mok: [10.92.16.59] => (item=php-mysql)[0m
+[0;32mok: [10.92.16.59] => (item=libapache2-mod-php)[0m
+
+TASK [lamp : Create document root] *********************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Set up port for Apache 2] *****************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Set up Apache virtualhost] ****************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Enable new site] **************************************************
+[0;33mchanged: [10.92.16.59][0m
+
+TASK [lamp : Disable default Apache site] **************************************
+[0;33mchanged: [10.92.16.59][0m
+
+TASK [lamp : Configure mysqld.conf] ********************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Sets the root password] *******************************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Removes all anonymous user accounts] ******************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Removes the MySQL test database] **********************************
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : UFW - Allow HTTP on port 8081] ************************************
+[1;35m[WARNING]: The value "8081" (type int) was converted to "'8081'" (type string).[0m
+[1;35mIf this does not look like what you expect, quote the entire value to ensure it[0m
+[1;35mdoes not change.[0m
+[0;32mok: [10.92.16.59][0m
+
+TASK [lamp : Sets Up PHP Info Page] ********************************************
+[0;32mok: [10.92.16.59][0m
+
+RUNNING HANDLER [lamp : Reload Apache] *****************************************
+[0;33mchanged: [10.92.16.59][0m
+
+PLAY RECAP *********************************************************************
+[0;33m10.92.16.59[0m                : [0;32mok=15  [0m [0;33mchanged=3   [0m unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Check database existence)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $db_user_pass
+[Pipeline] {
+[Pipeline] sh
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [db_user_pass]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ mysql -u jenkins -p**** -h 10.92.16.59 -e use mydatabase
++ echo exists
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Load database dump)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/DB_dump/dumps
+[Pipeline] {
+[Pipeline] sh
++ head -n 1
++ ls -t 2023-05-10_08-43-13-mydatabase.sql 2023-05-10_08-44-20-mydatabase.sql 2023-05-10_08-48-47-mydatabase.sql 2023-05-10_08-49-27-mydatabase.sql 2023-05-10_08-49-54-mydatabase.sql 2023-05-10_08-50-58-mydatabase.sql 2023-05-10_08-51-43-mydatabase.sql 2023-05-10_08-53-34-mydatabase.sql 2023-05-10_10-45-49-mydatabase.sql 2023-05-10_11-02-42-mydatabase.sql 2023-05-10_11-04-23-mydatabase.sql 2023-05-10_11-04-43-mydatabase.sql 2023-05-10_11-08-24-mydatabase.sql 2023-05-10_19-41-14-mydatabase.sql
+[Pipeline] sh
++ echo 2023-05-10_19-41-14-mydatabase.sql
+2023-05-10_19-41-14-mydatabase.sql
+[Pipeline] withCredentials
+Masking supported pattern matches of $db_user_pass
+[Pipeline] {
+[Pipeline] sh
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [db_user_pass]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ mysql -u jenkins -p**** -h 10.92.16.59 mydatabase
+mysql: [Warning] Using a password on the command line interface can be insecure.
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS

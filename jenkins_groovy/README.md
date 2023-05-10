@@ -20,3 +20,6 @@ docker run   --name jenkins-blueocean   --restart=on-failure   --detach   --netw
 Install recommended plugins.
 
 Create pipelines with following code.
+
+# Example
+Examples files in output directory.
