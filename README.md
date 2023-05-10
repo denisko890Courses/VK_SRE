@@ -1,6 +1,10 @@
 # VK_SRE
 SRE Quest
 
+jenkins_groovy - Pipelines for deploy LAMP and dump DB
+
+lamp_ubuntu2004 - Ansible playbooks for deploy and configure LAMP
+
 # Requirements:
 - Ansible 2.14.
 - Generated keys.
