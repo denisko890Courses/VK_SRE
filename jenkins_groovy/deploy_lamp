@@ -23,8 +23,10 @@ pipeline {
             steps {
                 // Check if database exists using shell command and store the result in a variable
                 script {
-                    def result = sh(returnStdout: true, script: "mysql -u ${params.DB_USER} -p${params.DB_PASSWORD} -h ${params.DB_HOST} -e 'use ${params.DB_NAME}' >/dev/null 2>&1 && echo 'exists' || true").trim()
-                    env.DB_EXISTS = result
+                    withCredentials([usernamePassword(credentialsId: 'db_jenkins_creds', passwordVariable: 'db_user_pass', usernameVariable: 'db_user')]) {
+                        def result = sh(returnStdout: true, script: "mysql -u $db_user -p$db_user_pass -h ${params.DB_HOST} -e 'use ${params.DB_NAME}' >/dev/null 2>&1 && echo 'exists' || true").trim()
+                        env.DB_EXISTS = result
+                    }
                 }
             }
         }
@@ -41,7 +43,9 @@ pipeline {
                     dir("${dumpDir}") {
                         def dumpFile = sh(script: "ls -t *.sql | head -n 1", returnStdout: true).trim()
                         sh "echo ${dumpFile}"
-                        sh "mysql -u ${params.DB_USER} -p${params.DB_PASSWORD} -h ${params.DB_HOST} ${params.DB_NAME} < ${dumpFile}"
+                        withCredentials([usernamePassword(credentialsId: 'db_jenkins_creds', passwordVariable: 'db_user_pass', usernameVariable: 'db_user')]) {
+                            sh "mysql -u $db_user -p$db_user_pass -h ${params.DB_HOST} ${params.DB_NAME} < ${dumpFile}"
+                        }
                     }
                 }
             }
@@ -49,8 +53,6 @@ pipeline {
     }
     parameters {
         string(name: 'DB_NAME', defaultValue: 'mydatabase', description: 'MySQL database name')
-        string(name: 'DB_USER', defaultValue: 'jenkins', description: 'MySQL database user')
         string(name: 'DB_HOST', defaultValue: '10.92.16.59', description: 'MySQL host')
-        password(name: 'DB_PASSWORD', defaultValue: 'mysql_root_password', description: 'MySQL database password')
     }
 }
