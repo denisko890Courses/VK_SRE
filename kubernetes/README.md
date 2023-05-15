@@ -11,8 +11,8 @@ Installed kubectl
 minikube start --driver=docker
 kubectl create ns cats-dogs
 minikube addons enable ingress
-kubectl apply -f cats-dogs-stateful.yaml
-kubectl apply -f cats-dogs-deployment.yaml
+kubectl apply -f cats-dogs-stateful.yaml -n cats-dogs
+kubectl apply -f cats-dogs-deployment.yaml -n cats-dogs
 kubectl apply -f cats-dogs-cronjob.yaml --namespace cats-dogs
 kubectl get po -n cats-dogs
 ```
