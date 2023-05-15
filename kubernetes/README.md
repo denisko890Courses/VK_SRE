@@ -1,9 +1,9 @@
 # Kubernetes Lab
 
 ## Requirements
-Installed minikube
-Installed docker
-Installed kubectl
+1) Installed minikube
+2) Installed docker
+3) Installed kubectl
 
 ## Deploy and configure
 
