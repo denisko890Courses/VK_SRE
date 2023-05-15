@@ -1,0 +1,103 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cats-dogs
+  namespace: cats-dogs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cats-dogs
+  template:
+    metadata:
+      labels:
+        app: cats-dogs
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: config-volume
+        configMap:
+          name: nginx-configmap
+          items:
+          - key: default.conf
+            path: default.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configmap
+  namespace: cats-dogs
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        return 200 "Cats and Dogs Review App";
+      }
+      location /dogs {
+        proxy_pass http://cats-dogs-webdav-1.cats-dogs-webdav.cats-dogs.svc.cluster.local;
+      }
+      location /cats {
+        proxy_pass http://cats-dogs-webdav-0.cats-dogs-webdav.cats-dogs.svc.cluster.local;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cats-dogs-svc
+  namespace: cats-dogs
+spec:
+  selector:
+    app: cats-dogs
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cats-dogs-ingress
+  namespace: cats-dogs
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cats-dogs-svc
+                port:
+                  name: http

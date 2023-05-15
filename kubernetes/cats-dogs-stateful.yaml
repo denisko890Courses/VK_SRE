@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cats-dogs-webdav
+  namespace: cats-dogs
+spec:
+  replicas: 2
+  serviceName: cats-dogs-webdav
+  selector:
+    matchLabels:
+      app: cats-dogs-webdav
+  template:
+    metadata:
+      labels:
+        app: cats-dogs-webdav
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/nginx/conf.d/default.conf
+            subPath: default.conf
+          - name: data-volume
+            mountPath: /usr/share/nginx/html
+      volumes:
+      - name: webdav
+        emptyDir: {}
+      - name: config-volume
+        configMap:
+          name: nginx-config
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: data-volume
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cats-dogs-webdav
+  namespace: cats-dogs
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    app: cats-dogs-webdav
+  type: ClusterIP
+  clusterIP: None
+  clusterIPs:
+    - None
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: cats-dogs
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        location / {
+          return 200 "Cats and Dogs Review App";
+        }
+        location /dogs {
+            alias /usr/share/nginx/html/dogs;
+            autoindex on;
+            dav_methods PUT DELETE MKCOL COPY MOVE;
+            create_full_put_path on;
+            dav_access user:rw group:rw all:r;
+        }
+        location /cats {
+            alias /usr/share/nginx/html/cats;
+            autoindex on;
+            dav_methods PUT DELETE MKCOL COPY MOVE;
+            create_full_put_path on;
+            dav_access user:rw group:rw all:r;
+        }
+    }
